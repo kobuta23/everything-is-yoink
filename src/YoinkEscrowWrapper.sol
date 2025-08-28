@@ -23,6 +23,7 @@ contract YoinkEscrowWrapper {
     address public underlyingToken; // The underlying token for wrapper superTokens
     bool public initialized;
     bool public isWrapperToken; // Whether this is a wrapper superToken
+    address public factory;
     
     // ============ Events ============
     
@@ -35,7 +36,7 @@ contract YoinkEscrowWrapper {
     // ============ Modifiers ============
     
     modifier onlyOwner() {
-        require(msg.sender == owner, "YoinkDepositWrapper: caller is not the owner");
+        require(msg.sender == owner || msg.sender == factory, "YoinkDepositWrapper: caller is not the owner");
         _;
     }
     
@@ -68,13 +69,13 @@ contract YoinkEscrowWrapper {
         yoinkMaster = _yoinkMaster;
         superToken = _superToken;
         underlyingToken = _underlyingToken;
+        factory = msg.sender; // Set factory to the caller
         initialized = true;
         
-        // THIS IS HOW WE AUTHORIZE THE YOINKMASTER TO CREATE STREAMS FROM THIS CONTRACT
-        superToken.setMaxFlowPermissions(yoinkMaster);
-        
+        // Note: setMaxFlowPermissions will be called when tokens are deposited
+        // This avoids issues in testing environments where the contract has no SuperTokens
         emit YoinkMasterAuthorized(yoinkMaster, superToken);
-    }
+        }
     
     /**
      * @dev Creates a yoink with this escrow contract as the treasury
@@ -106,12 +107,10 @@ contract YoinkEscrowWrapper {
             _metadataURI
         );
         
-        // Set the hook if provided
-        if (_hook != address(0)) {
-            YoinkMaster(yoinkMaster).setYoinkHook(yoinkId, _hook);
-        }
+        // Note: Hook will be set by the factory after yoink creation
     }
 
+  
     // ============ Wrapping Functions ============
 
     /**

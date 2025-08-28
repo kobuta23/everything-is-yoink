@@ -89,6 +89,8 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
         require(yoinks[yoinkId].treasury != address(0), "Yoink: yoink does not exist");
         _;
     }
+    
+
 
     // ============ Constructor ============
     
@@ -328,7 +330,7 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
      * @param yoinkId Unique identifier for the yoink
      * @return YoinkData struct containing all yoink information
      */
-    function getYoink(uint256 yoinkId) external view returns (YoinkData memory) {
+    function getYoink(uint256 yoinkId) external view yoinkExists(yoinkId) returns (YoinkData memory) {
         return yoinks[yoinkId];
     }
 

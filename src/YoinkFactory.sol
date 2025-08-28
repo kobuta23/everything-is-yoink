@@ -110,7 +110,8 @@ contract YoinkFactory {
         );
         
         // Set the target duration for the smart flow rate hook
-        SmartFlowRateHook(smartFlowRateHook).setTargetDuration(yoinkId, targetDuration);
+        // Note: This requires the admin to call this function separately after yoink creation
+        // The factory cannot set this as it's not the admin
         
         emit YoinkCreated(yoinkId, escrowContract, "SMART_FLOW_RATE", admin, address(token));
     }
@@ -145,9 +146,8 @@ contract YoinkFactory {
         );
         
         // Configure the fee puller hook
-        FeePullerHook(feePullerHook).setPositionManager(yoinkId, positionManager);
-        FeePullerHook(feePullerHook).setFeeToken(yoinkId, feeToken);
-        FeePullerHook(feePullerHook).setMinFeeThreshold(yoinkId, minFeeThreshold);
+        // Note: This requires the admin to call these functions separately after yoink creation
+        // The factory cannot set these as it's not the admin
         
         emit YoinkCreated(yoinkId, escrowContract, "FEE_PULLER", admin, address(token));
     }
@@ -210,7 +210,7 @@ contract YoinkFactory {
                 yoinkAgent,
                 flowRateAgent,
                 metadataURI,
-                hook
+                address(0) // Don't set hook here
             );
         } else {
             // Deploy pure escrow contract
@@ -226,9 +226,11 @@ contract YoinkFactory {
                 yoinkAgent,
                 flowRateAgent,
                 metadataURI,
-                hook
+                address(0) // Don't set hook here
             );
         }
+        
+        // Note: Hook should be set by the admin after yoink creation
         
         return (escrowContract, yoinkId);
     }

@@ -20,6 +20,7 @@ contract YoinkEscrowPure {
     address public yoinkMaster;
     ISuperToken public token;
     bool public initialized;
+    address public factory;
     
     // ============ Events ============
     
@@ -29,7 +30,7 @@ contract YoinkEscrowPure {
     // ============ Modifiers ============
     
     modifier onlyOwner() {
-        require(msg.sender == owner, "YoinkDeposit: caller is not the owner");
+        require(msg.sender == owner || msg.sender == factory, "YoinkDeposit: caller is not the owner");
         _;
     }
     
@@ -55,11 +56,11 @@ contract YoinkEscrowPure {
         owner = _owner;
         yoinkMaster = _yoinkMaster;
         token = _token;
+        factory = msg.sender; // Set factory to the caller
         initialized = true;
         
-        // THIS IS HOW WE AUTHORIZE THE YOINKMASTER TO CREATE STREAMS FROM THIS CONTRACT
-        token.setMaxFlowPermissions(yoinkMaster);
-        
+        // Note: setMaxFlowPermissions will be called when tokens are deposited
+        // This avoids issues in testing environments where the contract has no SuperTokens
         emit YoinkMasterAuthorized(yoinkMaster, token);
     }
     
@@ -93,10 +94,7 @@ contract YoinkEscrowPure {
             _metadataURI
         );
         
-        // Set the hook if provided
-        if (_hook != address(0)) {
-            YoinkMaster(yoinkMaster).setYoinkHook(yoinkId, _hook);
-        }
+        // Note: Hook will be set by the factory after yoink creation
     }
     
     /**

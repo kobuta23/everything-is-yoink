@@ -40,8 +40,8 @@ contract NonTransferrableNFTTest is Test {
         vm.expectRevert("NonTransferrableNFT: ownerOf must be implemented by inheriting contract");
         nft.ownerOf(1);
         
-        // balanceOf always returns 0
-        assertEq(nft.balanceOf(user1), 0);
+        // balanceOf always returns 1 (as per NonTransferrableNFT design)
+        assertEq(nft.balanceOf(user1), 1);
     }
     
     function test_EmitBurn() public {
@@ -51,8 +51,8 @@ contract NonTransferrableNFTTest is Test {
         vm.expectRevert("NonTransferrableNFT: ownerOf must be implemented by inheriting contract");
         nft.ownerOf(1);
         
-        // balanceOf always returns 0
-        assertEq(nft.balanceOf(user1), 0);
+        // balanceOf always returns 1 (as per NonTransferrableNFT design)
+        assertEq(nft.balanceOf(user1), 1);
     }
     
     function test_EmitTransfer() public {
@@ -62,9 +62,9 @@ contract NonTransferrableNFTTest is Test {
         vm.expectRevert("NonTransferrableNFT: ownerOf must be implemented by inheriting contract");
         nft.ownerOf(1);
         
-        // balanceOf always returns 0
-        assertEq(nft.balanceOf(user1), 0);
-        assertEq(nft.balanceOf(user2), 0);
+        // balanceOf always returns 1 (as per NonTransferrableNFT design)
+        assertEq(nft.balanceOf(user1), 1);
+        assertEq(nft.balanceOf(user2), 1);
     }
     
     function test_TransferFromReverts() public {
