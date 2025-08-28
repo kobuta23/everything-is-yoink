@@ -1,0 +1,60 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.23"
+evm_version = "paris"
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+
+# Add fork caching to speed up tests
+ffi = true
+fs_permissions = [{ access = "write", path = "./"}]
+
+# Configure test verbosity
+# verbosity = 3
+# Enable fork-based testing
+force_evmla = true
+
+# Cache all forks to make tests faster
+eth_rpc_url_max_retries = 3
+
+remappings = [
+    "@superfluid-finance/ethereum-contracts/=lib/superfluid-protocol/packages/ethereum-contracts/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin-v5/contracts/=lib/openzeppelin-contracts-v5/contracts/"
+]
+
+[rpc_endpoints]
+# Multiple fallback endpoints for each network
+mainnet = "https://eth.llamarpc.com"
+base = "https://base-mainnet.arpc.x.superfluid.dev/"
+optimism = "https://optimism-mainnet.rpc.x.superfluid.dev/"
+arbitrum = "https://arbitrum-one.rpc.x.superfluid.dev/"
+
+# Sepolia testnet endpoints for testing before mainnet deployment
+sepolia = "https://sepolia.infura.io/v3/b9794ad1ddf84dfb8c34d6bb5dca2001"
+base_sepolia = "https://sepolia.base.org"
+optimism_sepolia = "https://sepolia.optimism.io"
+
+[profile.ci]
+# CI specific settings
+fuzz_runs = 1000
+verbosity = 4
+
+[profile.gas_report]
+# Gas reporting profile
+gas_reports = ["*"]
+gas_reports_ignore = []
+
+[profile.fast]
+fuzz_runs = 1
+
+[fmt]
+bracket_spacing = true
+sort_imports = true
+contract_new_lines = true
+line_length = 120
+number_underscore = "thousands"
+wrap_comments = true
