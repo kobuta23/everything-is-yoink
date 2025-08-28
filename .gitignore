@@ -112,6 +112,9 @@ temp/
 *.sw?
 
 # Foundry specific
+# Git submodules (Foundry creates these automatically)
+.gitmodules
+
 # Remix compiler artifacts
 **/artifacts/
 **/artifacts/**
