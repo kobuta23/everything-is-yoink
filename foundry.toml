@@ -22,8 +22,7 @@ eth_rpc_url_max_retries = 3
 
 remappings = [
     "@superfluid-finance/ethereum-contracts/=lib/superfluid-protocol/packages/ethereum-contracts/",
-    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-    "@openzeppelin-v5/contracts/=lib/openzeppelin-contracts-v5/contracts/"
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
 ]
 
 [rpc_endpoints]
