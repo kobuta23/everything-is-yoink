@@ -39,7 +39,8 @@ contract YoinkHooksTest is Test {
             yoinkAgent,
             flowRateAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
     }
 

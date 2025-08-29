@@ -32,9 +32,9 @@ contract DeployYoinkScript is Script {
         console.log("Deployer address:", deployer);
         console.log("");
         console.log("Usage:");
-        console.log("1. Treasury calls createYoink(owner, yoinkAgent, flowRateAgent, token, metadataURI)");
+        console.log("1. Treasury calls createYoink(owner, yoinkAgent, flowRateAgent, token, metadataURI, hook)");
         console.log("2. Treasury must have given approval to Yoink contract for the token");
-        console.log("3. FlowRateAgent can call setFlowRate() to start/update streams");
+        console.log("3. FlowRateAgent can call startStream() to start streams or updateStream() to update flow rates");
         console.log("4. YoinkAgent can call yoink() to change stream recipients");
         console.log("5. Owner can manage agents and transfer ownership");
         console.log("");

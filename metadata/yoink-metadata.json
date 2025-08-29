@@ -1,0 +1,37 @@
+{
+  "name": "Yoink NFT",
+  "description": "A non-transferrable NFT representing ownership of a Superfluid stream. This NFT is minted when a stream starts and burned when it stops. The holder can yoink the stream to change recipients.",
+  "image": "ipfs://bafkreiejevgwmhd7ecmq5rjf2khkbssxdquiwvag57vfvobp6yyphrs66i",
+  "external_url": "https://github.com/your-username/everything-is-yoink",
+  "attributes": [
+    {
+      "trait_type": "Type",
+      "value": "Yoinked NFT"
+    },
+    {
+      "trait_type": "Transferrable",
+      "value": "No"
+    },
+    {
+      "trait_type": "Yoinkable",
+      "value": "Yes"
+    },
+    {
+      "trait_type": "Protocol",
+      "value": "Superfluid"
+    },
+    {
+      "trait_type": "Functionality",
+      "value": "Yoink"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "ipfs://YOUR_IMAGE_CID_HERE",
+        "type": "image/png"
+      }
+    ],
+    "category": "image"
+  }
+}

@@ -9,6 +9,34 @@ Everything-is-yoink is a state of the art smart contract system for the modern y
 
 ![Yoink Meme](yoink.jpeg)
 
+## 🚀 Basic Interface
+
+```solidity
+// 1. Create the yoink
+function createYoink(
+   address admin,
+   address yoinkAgent,
+   address flowRateAgent,
+   ISuperToken token,
+   string memory metadataURI,
+   address hook
+) returns (uint256 yoinkId);
+
+// 2. Start the stream 
+function startStream(
+   uint256 yoinkId,
+   int96 flowRate,
+   address recipient
+);
+
+// 3. Start yoinking 
+function yoink(
+    uint256 yoinkId,
+    address newRecipient
+);
+```
+
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -148,7 +176,8 @@ factory.createCustomYoink(
 ### YoinkMaster
 - `createYoink()` - Create a new yoink
 - `yoink()` - Change stream recipient
-- `setFlowRate()` - Set or update flow rate
+- `startStream()` - Start a new stream
+- `updateStream()` - Update flow rate for existing stream
 - `stopStream()` - Stop the stream
 - `setYoinkHook()` - Set custom hook
 - `updateTreasury()` - Change treasury address

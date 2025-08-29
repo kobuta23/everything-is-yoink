@@ -61,21 +61,21 @@ contract YoinkFactory {
      * @dev Creates a yoink with rate limiting (1 hour between yoinks)
      * @param admin Admin of the yoink (becomes owner of escrow)
      * @param yoinkAgent Address authorized to change recipients
-     * @param flowRateAgent Address authorized to change flow rates
+     * @param streamAgent Address authorized to change flow rates
      * @param token SuperToken to be streamed
      * @param metadataURI Optional metadata URI
      */
     function createRateLimitedYoink(
         address admin,
         address yoinkAgent,
-        address flowRateAgent,
+        address streamAgent,
         ISuperToken token,
         string memory metadataURI
     ) external returns (address escrowContract, uint256 yoinkId) {
         (escrowContract, yoinkId) = _createYoinkWithEscrow(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             token,
             metadataURI,
             rateLimitHook
@@ -156,7 +156,7 @@ contract YoinkFactory {
      * @dev Creates a yoink with custom hook
      * @param admin Admin of the yoink (becomes owner of escrow)
      * @param yoinkAgent Address authorized to change recipients
-     * @param flowRateAgent Address authorized to change flow rates
+     * @param streamAgent Address authorized to change flow rates
      * @param token SuperToken to be streamed
      * @param metadataURI Optional metadata URI
      * @param customHook Custom hook contract address
@@ -164,7 +164,7 @@ contract YoinkFactory {
     function createCustomYoink(
         address admin,
         address yoinkAgent,
-        address flowRateAgent,
+        address streamAgent,
         ISuperToken token,
         string memory metadataURI,
         address customHook
@@ -172,7 +172,7 @@ contract YoinkFactory {
         (escrowContract, yoinkId) = _createYoinkWithEscrow(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             token,
             metadataURI,
             customHook
@@ -186,7 +186,7 @@ contract YoinkFactory {
     function _createYoinkWithEscrow(
         address admin,
         address yoinkAgent,
-        address flowRateAgent,
+        address streamAgent,
         ISuperToken token,
         string memory metadataURI,
         address hook
@@ -208,9 +208,9 @@ contract YoinkFactory {
             yoinkId = YoinkEscrowWrapper(escrowContract).createYoink(
                 admin,
                 yoinkAgent,
-                flowRateAgent,
+                streamAgent,
                 metadataURI,
-                address(0) // Don't set hook here
+                hook
             );
         } else {
             // Deploy pure escrow contract
@@ -224,9 +224,9 @@ contract YoinkFactory {
             yoinkId = YoinkEscrowPure(escrowContract).createYoink(
                 admin,
                 yoinkAgent,
-                flowRateAgent,
+                streamAgent,
                 metadataURI,
-                address(0) // Don't set hook here
+                hook
             );
         }
         

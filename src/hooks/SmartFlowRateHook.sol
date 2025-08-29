@@ -88,7 +88,7 @@ contract SmartFlowRateHook is IYoinkHook {
         if (newRate != currentRate && newRate >= MIN_FLOW_RATE) {
             // Update flow rate via YoinkMaster
             address currentRecipient = yoinkMaster.getCurrentRecipient(yoinkId);
-            yoinkMaster.setFlowRate(yoinkId, newRate, currentRecipient);
+            yoinkMaster.updateStream(yoinkId, newRate);
             emit FlowRateModulated(yoinkId, currentRate, newRate, targetDuration);
         }
     }

@@ -16,7 +16,7 @@ import {NonTransferrableNFT} from "./NonTransferrableNFT.sol";
  * Permission Hierarchy:
  * 0. Only Treasury can create a yoink as only treasury can set themselves as treasury
  * 1. Treasury & Token of a yoinkID are immutable. Shouldn't be able to change
- * 2. YoinkAgent, FlowRateAgent, and Hook are mutable by the Admin
+ * 2. YoinkAgent, StreamAgent, and Hook are mutable by the Admin
  * 3. The Admin is mutable by the admin.
  * 
  * Also includes factory functionality to create escrow contracts.
@@ -29,7 +29,7 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
     struct YoinkData {
         address admin;                   // Current admin of this yoink (mutable by admin)
         address yoinkAgent;              // Authorized bot for changing recipients (mutable by admin)
-        address flowRateAgent;           // Authorized bot for changing flow rates (mutable by admin)
+        address streamAgent;             // Authorized bot for changing flow rates (mutable by admin)
         address treasury;                // Treasury address that funds the stream (IMMUTABLE)
         ISuperToken token;               // SuperToken being streamed (IMMUTABLE)
         address currentRecipient;        // Current stream recipient
@@ -44,7 +44,7 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
     event RecipientChanged(uint256 indexed yoinkId, address indexed oldRecipient, address indexed newRecipient);
     event FlowRateUpdated(uint256 indexed yoinkId, int96 oldFlowRate, int96 newFlowRate);
     event YoinkAgentSet(uint256 indexed yoinkId, address indexed oldAgent, address indexed newAgent);
-    event FlowRateAgentSet(uint256 indexed yoinkId, address indexed oldAgent, address indexed newAgent);
+    event StreamAgentSet(uint256 indexed yoinkId, address indexed oldAgent, address indexed newAgent);
     event AdminshipTransferred(uint256 indexed yoinkId, address indexed oldAdmin, address indexed newAdmin);
     event StreamStarted(uint256 indexed yoinkId, address indexed recipient, int96 flowRate);
     event StreamStopped(uint256 indexed yoinkId);
@@ -77,9 +77,9 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
         _;
     }
     
-    modifier onlyFlowRateAgent(uint256 yoinkId) {
+    modifier onlyStreamAgent(uint256 yoinkId) {
         require(
-            yoinks[yoinkId].flowRateAgent == msg.sender || yoinks[yoinkId].admin == msg.sender,
+            yoinks[yoinkId].streamAgent == msg.sender || yoinks[yoinkId].admin == msg.sender,
             "Yoink: caller is not authorized to change flow rates"
         );
         _;
@@ -104,36 +104,40 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
      * Treasury and Token are immutable once set.
      * @param admin Initial admin of the yoink (can be treasury or someone else)
      * @param yoinkAgent Address authorized to change recipients
-     * @param flowRateAgent Address authorized to change flow rates
+     * @param streamAgent Address authorized to change flow rates
      * @param token SuperToken to be streamed (immutable once set)
      * @param metadataURI Optional metadata URI for the yoink NFT (empty string if not provided)
+     * @param hook Optional hook contract for beforeYoink calls (address(0) to skip)
      */
     function createYoink(
         address admin,
         address yoinkAgent,
-        address flowRateAgent,
+        address streamAgent,
         ISuperToken token,
-        string memory metadataURI
+        string memory metadataURI,
+        address hook
     ) external returns (uint256) {
         totalSupply++;
         uint256 yoinkId = totalSupply;
         require(admin != address(0), "Yoink: admin cannot be zero address");
         require(address(token) != address(0), "Yoink: token cannot be zero address");
+    
+
         yoinks[yoinkId] = YoinkData({
             treasury: msg.sender,         // Only treasury can create
             admin: admin,
             yoinkAgent: yoinkAgent,
-            flowRateAgent: flowRateAgent,
+            streamAgent: streamAgent,
             token: token,
             isActive: false,
-            hook: address(0),
+            hook: hook,
             currentRecipient: address(0),
             currentFlowRate: 0
         });
         // Set metadata URI - use provided URI or default if empty
         string memory finalURI = bytes(metadataURI).length > 0 
             ? metadataURI 
-            : "ipfs://bafkreiejevgwmhd7ecmq5rjf2khkbssxdquiwvag57vfvobp6yyphrs66i";
+            : "ipfs://bafkreih2kdck5focb3e6tosjvdc5oel2okonnqa22lmysmaj4dgxzikpdy";
         _setTokenURI(yoinkId, finalURI);
         
         // Note: NFT will be minted when stream starts, not when yoink is created
@@ -142,44 +146,59 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
         return yoinkId;
     }
 
+
+
     /**
-     * @dev Sets or updates the flow rate for a yoink using createFlowFrom
+     * @dev Starts a new stream for a yoink using createFlowFrom
+     * @param yoinkId Unique identifier for the yoink
+     * @param flowRate Flow rate to set (must be positive)
+     * @param recipient Recipient address
+     */
+    function startStream(
+        uint256 yoinkId,
+        int96 flowRate,
+        address recipient
+    ) external onlyStreamAgent(yoinkId) yoinkExists(yoinkId) {
+        require(flowRate > 0, "Yoink: flow rate must be positive");
+        require(recipient != address(0), "Yoink: recipient cannot be zero address");
+        
+        YoinkData storage yoink = yoinks[yoinkId];
+        require(!yoink.isActive, "Yoink: stream is already active");
+        
+        // Create stream from treasury to recipient
+        yoink.token.createFlowFrom(yoink.treasury, recipient, flowRate);
+        
+        // Update state after successful Superfluid call
+        yoink.currentRecipient = recipient;
+        yoink.currentFlowRate = flowRate;
+        yoink.isActive = true;
+        
+        // Update balance and emit mint event for the yoink NFT
+        _balances[recipient]++;
+        _emitMint(recipient, yoinkId);
+        emit StreamStarted(yoinkId, recipient, flowRate);
+    }
+
+    /**
+     * @dev Updates the flow rate for an active yoink stream
      * @param yoinkId Unique identifier for the yoink
      * @param newFlowRate New flow rate to set (must be positive)
-     * @param recipient Recipient address (if starting a new stream)
      */
-    function setFlowRate(
+    function updateStream(
         uint256 yoinkId,
-        int96 newFlowRate,
-        address recipient
-    ) external onlyFlowRateAgent(yoinkId) yoinkExists(yoinkId) {
+        int96 newFlowRate
+    ) external onlyStreamAgent(yoinkId) yoinkExists(yoinkId) {
         require(newFlowRate > 0, "Yoink: flow rate must be positive");
-        require(recipient != address(0), "Yoink: recipient cannot be zero address");
-        YoinkData storage yoink = yoinks[yoinkId];
         
-        if (yoink.isActive) {
-            // Update existing stream
-            int96 oldFlowRate = yoink.currentFlowRate;
-            
-            // Update the flow rate
-            yoink.token.updateFlowFrom(yoink.treasury, yoink.currentRecipient, newFlowRate);
-            yoink.currentFlowRate = newFlowRate;
-            emit FlowRateUpdated(yoinkId, oldFlowRate, newFlowRate);
-        } else {
-            // Create stream from treasury to recipient
-            yoink.token.createFlowFrom(yoink.treasury, recipient, newFlowRate);
-            
-            // Update state after successful Superfluid call
-            yoink.currentRecipient = recipient;
-            yoink.currentFlowRate = newFlowRate;
-            yoink.isActive = true;
-            
-            // Update balance and emit mint event for the yoink NFT
-            _balances[recipient]++;
-            _emitMint(recipient, yoinkId);
-            
-            emit StreamStarted(yoinkId, recipient, newFlowRate);
-        }
+        YoinkData storage yoink = yoinks[yoinkId];
+        require(yoink.isActive, "Yoink: stream is not active");
+        
+        int96 oldFlowRate = yoink.currentFlowRate;
+        
+        // Update the flow rate
+        yoink.token.updateFlowFrom(yoink.treasury, yoink.currentRecipient, newFlowRate);
+        yoink.currentFlowRate = newFlowRate;
+        emit FlowRateUpdated(yoinkId, oldFlowRate, newFlowRate);
     }
 
     /**
@@ -294,15 +313,15 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
      * @param yoinkId Unique identifier for the yoink
      * @param agent Address to set as flow rate agent (can be zero to remove)
      */
-    function setFlowRateAgent(uint256 yoinkId, address agent) 
-        external 
-        onlyYoinkAdmin(yoinkId) 
-        yoinkExists(yoinkId) 
+        function setStreamAgent(uint256 yoinkId, address agent)
+        external
+        onlyYoinkAdmin(yoinkId)
+        yoinkExists(yoinkId)
     {
-        address oldAgent = yoinks[yoinkId].flowRateAgent;
-        yoinks[yoinkId].flowRateAgent = agent;
+        address oldAgent = yoinks[yoinkId].streamAgent;
+        yoinks[yoinkId].streamAgent = agent;
         
-        emit FlowRateAgentSet(yoinkId, oldAgent, agent);
+        emit StreamAgentSet(yoinkId, oldAgent, agent);
     }
 
     /**
@@ -382,8 +401,8 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
      * @param agent Address to check
      * @return bool True if authorized
      */
-    function isFlowRateAgent(uint256 yoinkId, address agent) external view returns (bool) {
-        return yoinks[yoinkId].flowRateAgent == agent || yoinks[yoinkId].admin == agent;
+    function isStreamAgent(uint256 yoinkId, address agent) external view returns (bool) {
+        return yoinks[yoinkId].streamAgent == agent || yoinks[yoinkId].admin == agent;
     }
 
     /**

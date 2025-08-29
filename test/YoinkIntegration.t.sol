@@ -374,10 +374,10 @@ contract YoinkIntegrationTest is Test {
         vm.expectRevert("Yoink: stream is not active");
         yoinkMaster.yoink(yoinkId, recipient1);
         
-        // 2. Try to set flow rate as non-flow rate agent
+        // 2. Try to start stream as non-flow rate agent
         vm.prank(recipient1);
         vm.expectRevert("Yoink: caller is not authorized to change flow rates");
-        yoinkMaster.setFlowRate(yoinkId, 100, recipient1);
+        yoinkMaster.startStream(yoinkId, 100, recipient1);
         
         // 3. Verify the yoink was created correctly
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(yoinkId);

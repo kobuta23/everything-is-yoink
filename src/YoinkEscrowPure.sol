@@ -68,7 +68,7 @@ contract YoinkEscrowPure {
      * @dev Creates a yoink with this escrow contract as the treasury
      * @param _admin Admin of the yoink
      * @param _yoinkAgent Address authorized to change recipients
-     * @param _flowRateAgent Address authorized to change flow rates
+     * @param _streamAgent Address authorized to change flow rates
      * @param _metadataURI Optional metadata URI for the yoink
      * @param _hook Optional hook contract address
      * @return yoinkId The ID of the created yoink
@@ -76,22 +76,23 @@ contract YoinkEscrowPure {
     function createYoink(
         address _admin,
         address _yoinkAgent,
-        address _flowRateAgent,
+        address _streamAgent,
         string memory _metadataURI,
         address _hook
     ) external onlyOwner returns (uint256 yoinkId) {
         require(initialized, "YoinkDeposit: not initialized");
         require(_admin != address(0), "YoinkDeposit: admin cannot be zero");
         require(_yoinkAgent != address(0), "YoinkDeposit: yoinkAgent cannot be zero");
-        require(_flowRateAgent != address(0), "YoinkDeposit: flowRateAgent cannot be zero");
+        require(_streamAgent != address(0), "YoinkDeposit: streamAgent cannot be zero");
         
         // Create the yoink - this contract becomes the treasury
         yoinkId = YoinkMaster(yoinkMaster).createYoink(
             _admin,
             _yoinkAgent,
-            _flowRateAgent,
+            _streamAgent,
             token,
-            _metadataURI
+            _metadataURI,
+            _hook
         );
         
         // Note: Hook will be set by the factory after yoink creation
