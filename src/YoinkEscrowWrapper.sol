@@ -102,7 +102,7 @@ contract YoinkEscrowWrapper {
         yoinkId = YoinkMaster(yoinkMaster).createYoink(
             _admin,
             _yoinkAgent,
-            _flowRateAgent,
+            _streamAgent,
             superToken,
             _metadataURI,
             _hook

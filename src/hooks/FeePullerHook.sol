@@ -51,9 +51,12 @@ contract FeePullerHook is IYoinkHook {
         address oldRecipient,
         address newRecipient,
         address caller
-    ) external {
+    ) external returns (address) {
         // Pull fees from position manager
         _pullAndDepositFees(yoinkId);
+
+        // Return address(0) to use the original recipient
+        return address(0);
     }
     
     // ============ Configuration Functions ============

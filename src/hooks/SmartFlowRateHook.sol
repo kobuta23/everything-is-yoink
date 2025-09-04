@@ -44,9 +44,12 @@ contract SmartFlowRateHook is IYoinkHook {
         address oldRecipient,
         address newRecipient,
         address caller
-    ) external {
+    ) external returns (address) {
         // Modulate flow rate when recipient changes
         _modulateFlowRate(yoinkId);
+
+        // Return address(0) to use the original recipient
+        return address(0);
     }
     
     // ============ Flow Rate Agent Functions ============

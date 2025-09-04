@@ -220,8 +220,8 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
         
         // Call hook before yoink if set
         if (yoink.hook != address(0)) {
-            //TODO: update hook to return (potentially) a new recipient
-            yoink.hook.call(
+            // Hook can optionally return a new recipient
+            (bool success, bytes memory data) = yoink.hook.call(
                 abi.encodeWithSignature(
                     "beforeYoink(uint256,address,address,address)",
                     yoinkId,
@@ -230,6 +230,14 @@ contract YoinkMaster is NonTransferrableNFT, ReentrancyGuard {
                     msg.sender
                 )
             );
+
+            if (success && data.length == 32) {
+                // Hook returned a new recipient address
+                address hookRecipient = abi.decode(data, (address));
+                if (hookRecipient != address(0)) {
+                    newRecipient = hookRecipient;
+                }
+            }
         }
         
         // Delete the old stream and create new one

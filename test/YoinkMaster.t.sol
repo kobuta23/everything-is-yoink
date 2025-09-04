@@ -16,7 +16,7 @@ contract YoinkMasterTest is Test {
     address public treasury = 0x1C4f69f14cf754333C302246d25A48a13224118A; // Your account with SuperTokens
     address public owner = address(2);
     address public yoinkAgent = address(3);
-    address public flowRateAgent = address(4);
+    address public streamAgent = address(4);
     address public recipient1 = address(5);
     address public recipient2 = address(6);
     address public hook = address(7);
@@ -45,9 +45,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(generatedId);
@@ -56,7 +57,7 @@ contract YoinkMasterTest is Test {
         assertEq(yoinkData.admin, owner);
         assertEq(address(yoinkData.token), address(superToken));
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData.flowRateAgent, flowRateAgent);
+        assertEq(yoinkData.streamAgent, streamAgent);
         assertEq(yoinkData.hook, address(0)); // No hook by default
         assertFalse(yoinkData.isActive);
         
@@ -70,9 +71,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Set a hook
@@ -89,9 +91,10 @@ contract YoinkMasterTest is Test {
         yoinkMaster.createYoink(
             address(0), // Invalid owner
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
     }
 
@@ -100,9 +103,10 @@ contract YoinkMasterTest is Test {
         yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             ISuperToken(address(0)), // Invalid token
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
     }
 
@@ -112,9 +116,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Note: This test would normally yoink a Superfluid stream
@@ -132,9 +137,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Set a hook that reverts
@@ -158,9 +164,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Note: This test would normally test yoink permissions
@@ -178,9 +185,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Try to yoink without active stream
@@ -196,9 +204,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Note: This test would normally start a Superfluid stream
@@ -216,9 +225,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Note: This test would normally update a Superfluid stream
@@ -236,9 +246,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Note: This test would normally stop a Superfluid stream
@@ -256,16 +267,17 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Try to set flow rate as non-flow rate agent
         vm.stopPrank(); // Stop impersonating treasury
         vm.prank(recipient1);
         vm.expectRevert("Yoink: caller is not authorized to change flow rates");
-        yoinkMaster.setFlowRate(generatedId, 100, recipient1);
+        yoinkMaster.startStream(generatedId, 100, recipient1);
     }
 
     // ============ Agent Management Tests ============
@@ -274,9 +286,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         address newAgent = address(99);
@@ -292,27 +305,29 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         address newAgent = address(99);
         vm.stopPrank(); // Stop impersonating treasury
         vm.prank(owner);
-        yoinkMaster.setFlowRateAgent(generatedId, newAgent);
+        yoinkMaster.setStreamAgent(generatedId, newAgent);
         
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(generatedId);
-        assertEq(yoinkData.flowRateAgent, newAgent);
+        assertEq(yoinkData.streamAgent, newAgent);
     }
 
     function test_SetYoinkAgentRevertIfNotOwner() public {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         address newAgent = address(99);
@@ -326,16 +341,17 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         address newAgent = address(99);
         vm.stopPrank(); // Stop impersonating treasury
         vm.prank(recipient1); // Not owner
         vm.expectRevert("Yoink: caller is not the yoink admin");
-        yoinkMaster.setFlowRateAgent(generatedId, newAgent);
+        yoinkMaster.setStreamAgent(generatedId, newAgent);
     }
 
     // ============ Hook Management Tests ============
@@ -344,9 +360,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         vm.stopPrank(); // Stop impersonating treasury
@@ -361,9 +378,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Set hook
@@ -383,9 +401,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         vm.stopPrank(); // Stop impersonating treasury
@@ -402,9 +421,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         // Check treasury balance using real SuperTokens
@@ -424,9 +444,10 @@ contract YoinkMasterTest is Test {
         uint256 generatedId = yoinkMaster.createYoink(
             owner,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(generatedId);
@@ -435,7 +456,7 @@ contract YoinkMasterTest is Test {
         assertEq(yoinkData.admin, owner);
         assertEq(address(yoinkData.token), address(superToken));
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData.flowRateAgent, flowRateAgent);
+        assertEq(yoinkData.streamAgent, streamAgent);
         assertEq(yoinkData.hook, address(0));
         assertFalse(yoinkData.isActive);
     }
@@ -457,13 +478,14 @@ contract YoinkMasterTest is Test {
             testYoinkAgent,
             testFlowRateAgent,
             superToken,
-            "ipfs://test"
+            "ipfs://test",
+            address(0)
         );
         
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(generatedId);
         assertEq(yoinkData.admin, testOwner);
         assertEq(yoinkData.yoinkAgent, testYoinkAgent);
-        assertEq(yoinkData.flowRateAgent, testFlowRateAgent);
+        assertEq(yoinkData.streamAgent, testFlowRateAgent);
     }
 
     // ============ Hook Interface Implementation ============

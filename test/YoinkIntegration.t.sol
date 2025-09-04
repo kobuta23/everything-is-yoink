@@ -25,7 +25,7 @@ contract YoinkIntegrationTest is Test {
     
     address public admin = address(1);
     address public yoinkAgent = address(2);
-    address public flowRateAgent = address(3);
+    address public streamAgent = address(3);
     address public treasury = address(4);
     address public recipient1 = address(5);
     address public recipient2 = address(6);
@@ -84,7 +84,7 @@ contract YoinkIntegrationTest is Test {
         (address escrowContract, uint256 yoinkId) = factory.createRateLimitedYoink(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
             "ipfs://rate-limited-yoink"
         );
@@ -104,7 +104,7 @@ contract YoinkIntegrationTest is Test {
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(yoinkId);
         assertEq(yoinkData.admin, admin);
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData.flowRateAgent, flowRateAgent);
+        assertEq(yoinkData.streamAgent, streamAgent);
         assertEq(address(yoinkData.token), address(superToken));
         assertEq(yoinkData.hook, factory.rateLimitHook());
         
@@ -143,7 +143,7 @@ contract YoinkIntegrationTest is Test {
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(yoinkId);
         assertEq(yoinkData.admin, admin);
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData.flowRateAgent, factory.smartFlowRateHook());
+        assertEq(yoinkData.streamAgent, factory.smartFlowRateHook());
         assertEq(address(yoinkData.token), address(superToken));
         assertEq(yoinkData.hook, factory.smartFlowRateHook());
         
@@ -193,7 +193,7 @@ contract YoinkIntegrationTest is Test {
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(yoinkId);
         assertEq(yoinkData.admin, admin);
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData.flowRateAgent, factory.feePullerHook());
+        assertEq(yoinkData.streamAgent, factory.feePullerHook());
         assertEq(address(yoinkData.token), address(superToken));
         assertEq(yoinkData.hook, factory.feePullerHook());
         
@@ -232,7 +232,7 @@ contract YoinkIntegrationTest is Test {
         (address escrow1, uint256 yoinkId1) = factory.createRateLimitedYoink(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
             "ipfs://yoink1"
         );
@@ -258,12 +258,12 @@ contract YoinkIntegrationTest is Test {
         
         assertEq(yoinkData1.admin, admin);
         assertEq(yoinkData1.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData1.flowRateAgent, flowRateAgent);
+        assertEq(yoinkData1.streamAgent, streamAgent);
         assertEq(yoinkData1.hook, factory.rateLimitHook());
         
         assertEq(yoinkData2.admin, admin);
         assertEq(yoinkData2.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData2.flowRateAgent, factory.smartFlowRateHook());
+        assertEq(yoinkData2.streamAgent, factory.smartFlowRateHook());
         assertEq(yoinkData2.hook, factory.smartFlowRateHook());
         
         // Verify all escrows were initialized correctly
@@ -291,7 +291,7 @@ contract YoinkIntegrationTest is Test {
         (address escrowContract, uint256 yoinkId) = factory.createRateLimitedYoink(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
             "ipfs://configurable"
         );
@@ -324,7 +324,7 @@ contract YoinkIntegrationTest is Test {
         (address escrowContract, uint256 yoinkId) = factory.createRateLimitedYoink(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
             "ipfs://withdrawal-test"
         );
@@ -338,7 +338,7 @@ contract YoinkIntegrationTest is Test {
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(yoinkId);
         assertEq(yoinkData.admin, admin);
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData.flowRateAgent, flowRateAgent);
+        assertEq(yoinkData.streamAgent, streamAgent);
         assertEq(yoinkData.hook, factory.rateLimitHook());
         
         // Verify the escrow was initialized correctly
@@ -365,7 +365,7 @@ contract YoinkIntegrationTest is Test {
         (address escrowContract, uint256 yoinkId) = factory.createRateLimitedYoink(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
             "ipfs://error-test"
         );
@@ -383,7 +383,7 @@ contract YoinkIntegrationTest is Test {
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(yoinkId);
         assertEq(yoinkData.admin, admin);
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData.flowRateAgent, flowRateAgent);
+        assertEq(yoinkData.streamAgent, streamAgent);
         // Note: Hook is not set automatically by factory, so it should be address(0)
         assertEq(yoinkData.hook, address(0));
     }
@@ -398,7 +398,7 @@ contract YoinkIntegrationTest is Test {
             factory.createRateLimitedYoink(
                 admin,
                 yoinkAgent,
-                flowRateAgent,
+                streamAgent,
                 superToken,
                 string(abi.encodePacked("ipfs://yoink-", vm.toString(i)))
             );
@@ -409,7 +409,7 @@ contract YoinkIntegrationTest is Test {
             YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(i);
             assertEq(yoinkData.admin, admin);
             assertEq(yoinkData.yoinkAgent, yoinkAgent);
-            assertEq(yoinkData.flowRateAgent, flowRateAgent);
+            assertEq(yoinkData.streamAgent, streamAgent);
             // Note: Hook is not set automatically by factory, so it should be address(0)
             assertEq(yoinkData.hook, address(0));
         }
@@ -425,7 +425,7 @@ contract YoinkIntegrationTest is Test {
         (address escrowContract, uint256 yoinkId) = factory.createRateLimitedYoink(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
             "ipfs://fuzz-test"
         );
@@ -434,7 +434,7 @@ contract YoinkIntegrationTest is Test {
         YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(yoinkId);
         assertEq(yoinkData.admin, admin);
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
-        assertEq(yoinkData.flowRateAgent, flowRateAgent);
+        assertEq(yoinkData.streamAgent, streamAgent);
         // Note: Hook is not set automatically by factory, so it should be address(0)
         assertEq(yoinkData.hook, address(0));
         

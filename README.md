@@ -12,14 +12,14 @@ Everything-is-yoink is a state of the art smart contract system for the modern y
 ## 🚀 Basic Interface
 
 ```solidity
-// 1. Create the yoink
+// 1. Create the yoink, defining roles and optional metadata and hook 
 function createYoink(
-   address admin,
-   address yoinkAgent,
-   address flowRateAgent,
-   ISuperToken token,
-   string memory metadataURI,
-   address hook
+   address admin,                // admin that can change mutable properties later
+   address yoinkAgent,           // mutable. address that can yoink
+   address flowRateAgent,        // mutable. address that can update stream
+   ISuperToken token,            // immutable. superToken address
+   string memory metadataURI,    // immutable. optional. Each yoink is an NFT
+   address hook                  // mutable. optional. Logic contract called on each yoink
 ) returns (uint256 yoinkId);
 
 // 2. Start the stream 
@@ -29,11 +29,17 @@ function startStream(
    address recipient
 );
 
-// 3. Start yoinking 
+// 3. Start yoinking (only yoinkAgent)
 function yoink(
-    uint256 yoinkId,
-    address newRecipient
+   uint256 yoinkId,
+   address newRecipient
 );
+
+// 4. Update stream (only streamAgent)
+function updateStream(
+   uint256 yoinkId,
+   int96 newFlowRate
+)
 ```
 
 

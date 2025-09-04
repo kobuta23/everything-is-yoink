@@ -6,6 +6,7 @@ import {RateLimitHook} from "../src/hooks/RateLimitHook.sol";
 import {SmartFlowRateHook} from "../src/hooks/SmartFlowRateHook.sol";
 import {FeePullerHook} from "../src/hooks/FeePullerHook.sol";
 import {AdvancedHook} from "../src/hooks/AdvancedHook.sol";
+import {RecipientModifierHook} from "../src/hooks/RecipientModifierHook.sol";
 import {IYoinkHook} from "../src/hooks/IYoinkHook.sol";
 import {YoinkMaster} from "../src/YoinkMaster.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
@@ -16,6 +17,7 @@ contract YoinkHooksTest is Test {
     SmartFlowRateHook public smartFlowRateHook;
     FeePullerHook public feePullerHook;
     AdvancedHook public advancedHook;
+    RecipientModifierHook public recipientModifierHook;
     YoinkMaster public yoinkMaster;
     
     // Base mainnet addresses
@@ -23,7 +25,7 @@ contract YoinkHooksTest is Test {
     
     address public admin = address(1);
     address public yoinkAgent = address(2);
-    address public flowRateAgent = address(3);
+    address public streamAgent = address(3);
     address public treasury = 0x1C4f69f14cf754333C302246d25A48a13224118A; // Your account with SuperTokens
     address public recipient = address(5);
     address public positionManager = address(6);
@@ -37,7 +39,7 @@ contract YoinkHooksTest is Test {
         return yoinkMaster.createYoink(
             admin,
             yoinkAgent,
-            flowRateAgent,
+            streamAgent,
             superToken,
             "ipfs://test",
             address(0)
@@ -56,6 +58,7 @@ contract YoinkHooksTest is Test {
         smartFlowRateHook = new SmartFlowRateHook(address(yoinkMaster));
         feePullerHook = new FeePullerHook(address(yoinkMaster));
         advancedHook = new AdvancedHook();
+        recipientModifierHook = new RecipientModifierHook();
         
         // Use real Superfluid token (USDCx instead of STREME for better compatibility)
         superToken = ISuperToken(0xD04383398dD2426297da660F9CCA3d439AF9ce1b); // USDCx
@@ -431,12 +434,132 @@ contract YoinkHooksTest is Test {
     function test_AdvancedHookZeroRateLimit() public {
         // AdvancedHook doesn't have setRateLimit function
         // The rate limiting is built-in with 1 hour minimum interval
-        
+
         // First yoink
         advancedHook.beforeYoink(yoinkId, address(0), recipient, address(this));
-        
+
         // Second yoink should succeed after waiting
         vm.warp(block.timestamp + 1 hours);
         advancedHook.beforeYoink(yoinkId, recipient, address(0x200), address(this));
+    }
+
+    // ============ RecipientModifierHook Tests ============
+
+    function test_RecipientModifierHookDeployment() public {
+        assertEq(recipientModifierHook.owner(), address(this));
+    }
+
+    function test_RecipientModifierHookBeforeYoinkNoModification() public {
+        vm.stopPrank(); // Stop the treasury prank from setUp
+        vm.prank(recipientModifierHook.owner());
+
+        // Allow the recipient first so it doesn't get redirected
+        recipientModifierHook.setAllowedRecipient(recipient, true);
+
+        address modifiedRecipient = recipientModifierHook.beforeYoink(
+            yoinkId,
+            address(0),
+            recipient,
+            address(this)
+        );
+        assertEq(modifiedRecipient, address(0)); // Should return address(0) for no modification
+    }
+
+    function test_RecipientModifierHookForcedRecipient() public {
+        vm.stopPrank(); // Stop the treasury prank from setUp
+        address forcedRecipient = address(99);
+
+        // Set forced recipient
+        recipientModifierHook.setForcedRecipient(yoinkId, forcedRecipient);
+
+        vm.prank(recipientModifierHook.owner());
+        address modifiedRecipient = recipientModifierHook.beforeYoink(
+            yoinkId,
+            address(0),
+            recipient,
+            address(this)
+        );
+
+        assertEq(modifiedRecipient, forcedRecipient);
+    }
+
+    function test_RecipientModifierHookAllowedRecipient() public {
+        vm.stopPrank(); // Stop the treasury prank from setUp
+        address allowedRecipient = address(100);
+        address notAllowedRecipient = address(101);
+
+        // Set allowed recipient
+        recipientModifierHook.setAllowedRecipient(allowedRecipient, true);
+
+        // Test allowed recipient
+        vm.prank(recipientModifierHook.owner());
+        address modifiedRecipient = recipientModifierHook.beforeYoink(
+            yoinkId,
+            address(0),
+            allowedRecipient,
+            address(this)
+        );
+        assertEq(modifiedRecipient, address(0)); // Should use original recipient
+
+        // Test not allowed recipient - should redirect to owner
+        vm.prank(recipientModifierHook.owner());
+        modifiedRecipient = recipientModifierHook.beforeYoink(
+            yoinkId,
+            address(0),
+            notAllowedRecipient,
+            address(this)
+        );
+        assertEq(modifiedRecipient, recipientModifierHook.owner());
+    }
+
+    function test_RecipientModifierHookForcedRecipientTakesPrecedence() public {
+        vm.stopPrank(); // Stop the treasury prank from setUp
+        address forcedRecipient = address(99);
+        address allowedRecipient = address(100);
+
+        // Set forced recipient and allow the original recipient
+        recipientModifierHook.setForcedRecipient(yoinkId, forcedRecipient);
+        recipientModifierHook.setAllowedRecipient(allowedRecipient, true);
+
+        // Forced recipient should take precedence
+        vm.prank(recipientModifierHook.owner());
+        address modifiedRecipient = recipientModifierHook.beforeYoink(
+            yoinkId,
+            address(0),
+            allowedRecipient,
+            address(this)
+        );
+
+        assertEq(modifiedRecipient, forcedRecipient);
+    }
+
+    function test_RecipientModifierHookTransferOwnership() public {
+        vm.stopPrank(); // Stop the treasury prank from setUp
+        address newOwner = address(99);
+        recipientModifierHook.transferOwnership(newOwner);
+        assertEq(recipientModifierHook.owner(), newOwner);
+    }
+
+    // ============ Integration Test: Hook Recipient Modification ============
+
+    function test_IntegrationHookRecipientModification() public {
+        // Create a yoink with the recipient modifier hook
+        uint256 testYoinkId = yoinkMaster.createYoink(
+            admin,
+            yoinkAgent,
+            streamAgent,
+            superToken,
+            "ipfs://test",
+            address(recipientModifierHook)
+        );
+
+        // Set up forced recipient
+        address forcedRecipient = address(0x123);
+        recipientModifierHook.setForcedRecipient(testYoinkId, forcedRecipient);
+
+        // Note: This would require actual stream creation to test fully
+        // For now, we just test the hook configuration
+        YoinkMaster.YoinkData memory yoinkData = yoinkMaster.getYoink(testYoinkId);
+        assertEq(yoinkData.hook, address(recipientModifierHook));
     }
 }

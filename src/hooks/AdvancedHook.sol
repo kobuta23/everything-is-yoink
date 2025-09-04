@@ -40,26 +40,29 @@ contract AdvancedHook is IYoinkHook {
         address oldRecipient,
         address newRecipient,
         address caller
-    ) external {
+    ) external returns (address) {
         emit HookCalled(yoinkId, oldRecipient, newRecipient, caller);
-        
+
         // Example 1: Block specific yoinks
         if (blockedYoinks[yoinkId]) {
             emit HookReverted(yoinkId, "Yoink is blocked");
             revert("Hook: yoink is blocked");
         }
-        
+
         // Example 2: Rate limiting
         if (block.timestamp < lastYoinkTime[yoinkId] + MIN_INTERVAL) {
             emit HookReverted(yoinkId, "Rate limited");
             revert("Hook: rate limited");
         }
-        
+
         // Example 3: Custom logic (e.g., fee collection, notifications, etc.)
         // This could integrate with other protocols, send cross-chain messages, etc.
-        
+
         // Update last yoink time
         lastYoinkTime[yoinkId] = block.timestamp;
+
+        // Return address(0) to use the original recipient
+        return address(0);
     }
     
     // Management functions
