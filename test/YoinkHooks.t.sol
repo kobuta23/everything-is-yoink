@@ -543,6 +543,8 @@ contract YoinkHooksTest is Test {
     // ============ Integration Test: Hook Recipient Modification ============
 
     function test_IntegrationHookRecipientModification() public {
+        vm.stopPrank(); // Stop the treasury prank from setUp
+
         // Create a yoink with the recipient modifier hook
         uint256 testYoinkId = yoinkMaster.createYoink(
             admin,
@@ -553,7 +555,8 @@ contract YoinkHooksTest is Test {
             address(recipientModifierHook)
         );
 
-        // Set up forced recipient
+        // Set up forced recipient as the hook owner
+        vm.prank(recipientModifierHook.owner());
         address forcedRecipient = address(0x123);
         recipientModifierHook.setForcedRecipient(testYoinkId, forcedRecipient);
 

@@ -384,8 +384,8 @@ contract YoinkIntegrationTest is Test {
         assertEq(yoinkData.admin, admin);
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
         assertEq(yoinkData.streamAgent, streamAgent);
-        // Note: Hook is not set automatically by factory, so it should be address(0)
-        assertEq(yoinkData.hook, address(0));
+        // Note: Factory sets rate limiting hook automatically
+        assertEq(yoinkData.hook, factory.rateLimitHook());
     }
 
     // ============ Performance Integration Tests ============
@@ -410,8 +410,8 @@ contract YoinkIntegrationTest is Test {
             assertEq(yoinkData.admin, admin);
             assertEq(yoinkData.yoinkAgent, yoinkAgent);
             assertEq(yoinkData.streamAgent, streamAgent);
-            // Note: Hook is not set automatically by factory, so it should be address(0)
-            assertEq(yoinkData.hook, address(0));
+            // Note: Factory sets rate limiting hook automatically
+            assertEq(yoinkData.hook, factory.rateLimitHook());
         }
     }
 
@@ -435,8 +435,8 @@ contract YoinkIntegrationTest is Test {
         assertEq(yoinkData.admin, admin);
         assertEq(yoinkData.yoinkAgent, yoinkAgent);
         assertEq(yoinkData.streamAgent, streamAgent);
-        // Note: Hook is not set automatically by factory, so it should be address(0)
-        assertEq(yoinkData.hook, address(0));
+        // Note: Factory sets rate limiting hook automatically
+        assertEq(yoinkData.hook, factory.rateLimitHook());
         
         // Verify the escrow was initialized correctly
         // Check if this is a wrapper or pure SuperToken
